@@ -116,6 +116,14 @@ export default function App() {
   const isBoardFull = current.squares.every(Boolean);
   const isGameOver = winner || isBoardFull;
 
+  <div className="App">
+      <h1>Welcome to My Site</h1>
+      <p>This is my homepage.</p>
+
+      {/* Your Game component or other content can go here */}
+      {/* <Game /> */}
+    </div>
+
   useEffect(() => {
     localStorage.setItem('ticTacToeHistory', JSON.stringify(history));
     localStorage.setItem('ticTacToeStep', JSON.stringify(stepNumber));
