@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/Game1_mine/static/css/main.4387da8d.css",
-    "main.js": "/Game1_mine/static/js/main.73c3529c.js",
-    "static/js/453.951246a7.chunk.js": "/Game1_mine/static/js/453.951246a7.chunk.js",
-    "index.html": "/Game1_mine/index.html",
-    "main.4387da8d.css.map": "/Game1_mine/static/css/main.4387da8d.css.map",
-    "main.73c3529c.js.map": "/Game1_mine/static/js/main.73c3529c.js.map",
-    "453.951246a7.chunk.js.map": "/Game1_mine/static/js/453.951246a7.chunk.js.map"
+    "main.css": "/anissmz/Game1_TicTacToe/static/css/main.4387da8d.css",
+    "main.js": "/anissmz/Game1_TicTacToe/static/js/main.9b68b6c1.js",
+    "static/js/453.951246a7.chunk.js": "/anissmz/Game1_TicTacToe/static/js/453.951246a7.chunk.js",
+    "index.html": "/anissmz/Game1_TicTacToe/index.html",
+    "main.4387da8d.css.map": "/anissmz/Game1_TicTacToe/static/css/main.4387da8d.css.map",
+    "main.9b68b6c1.js.map": "/anissmz/Game1_TicTacToe/static/js/main.9b68b6c1.js.map",
+    "453.951246a7.chunk.js.map": "/anissmz/Game1_TicTacToe/static/js/453.951246a7.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.4387da8d.css",
-    "static/js/main.73c3529c.js"
+    "static/js/main.9b68b6c1.js"
   ]
 }
