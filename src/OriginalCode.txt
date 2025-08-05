@@ -1,0 +1,173 @@
+// onSomething -- for props which represent events.
+// handleSomething -- for the function definitions which handle those events.
+
+import { useState } from 'react';
+import './App.css';
+
+function Square({ value, onSquareClick, isWinning }) {
+  return (
+    <button
+      className={`square ${isWinning ? 'winning' : ''}`}
+      onClick={onSquareClick}
+    >
+      {value}
+    </button>
+  );
+}
+
+
+
+function Board({ xIsNext, squares, onPlay, currentMove }) {
+  function handleClick(i) {
+    
+    //Check dulu square null / ada isi or not
+    if (squares[i] || calculateWinner(squares)) {
+      return;
+    }
+
+    const nextSquares = squares.slice();  //.slice - to create a copy of the squares array instead of modifying the existing array
+    if (xIsNext) {
+      nextSquares[i] = "X";
+    } else {
+      nextSquares[i] = "O";
+    }
+    onPlay(nextSquares, i);
+  }
+
+  const result = calculateWinner(squares);
+  const winner = result ? result.winner : null;
+  const winningLine = result ? result.line : null;
+  let status;
+
+  if (winner) {
+    status = "Winner: " + winner;
+  } else if (squares.every(Boolean)) {
+    status = "Draw!";
+  } else {
+    status = "Next player: " + (xIsNext ? "X" : "O");
+  }
+  return (
+    <>
+      <div className="status">{status}</div>
+      
+      {/*Nested loop to create 3x3 grid*/}
+      {[0, 1, 2].map((row) => (                     // 0,1,2 = Id untuk row
+        <div key={row} className="board-row">
+          {[0, 1, 2].map((col) => {                 // 0,1,2 = Id untuk column 
+            const index = row * 3 + col;
+            return (
+              <Square
+                key={index}
+                value={squares[index]}
+                onSquareClick={() => handleClick(index)}
+                isWinning={winningLine?.includes(index)}
+              />
+
+            );
+          })}
+        </div>
+      ))}
+
+   
+    </>
+  );
+}
+
+
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
+  ];
+  for (let line of lines) {
+    const [a, b, c] = line;
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return { winner: squares[a], line };
+    }
+  }
+  return null;
+}
+
+
+function getLocation(index) {
+  const row = Math.floor(index / 3) + 1;
+  const col = (index % 3) + 1;
+  return `(${row}, ${col})`;
+}
+
+
+export default function Game() {
+  const [history, setHistory] = useState([
+    { squares: Array(9).fill(null), moveLocation: null }
+  ]);
+
+  const [currentMove, setCurrentMove] = useState(0);
+  const xIsNext = currentMove % 2 === 0;
+
+  function handlePlay(nextSquares, index) {
+    const nextHistory = [...history.slice(0, currentMove + 1), {
+      squares: nextSquares,
+      moveLocation: getLocation(index),
+    }];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
+  }
+
+  
+  function restartGame() {
+    setHistory([{ squares: Array(9).fill(null), moveLocation: null }]);
+    setCurrentMove(0);
+  }
+
+
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+  }
+
+  const currentSquares = history[currentMove].squares;
+
+  const moves = history.map((step, move) => {
+    const description = move
+      ? `Go to move #${move} (${step.moveLocation})`
+      : 'Go to game start';
+    return (
+      <li key={move}>
+        {move === currentMove ? (
+          <span>You are at move #{move}</span>
+        ) : (
+          <button onClick={() => jumpTo(move)}>{description}</button>
+        )}
+      </li>
+    );
+  });
+
+
+  
+  const [isAscending, setIsAscending] = useState(true);
+  const orderedMoves = isAscending ? moves : [...moves].reverse();
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board
+          xIsNext={xIsNext}
+          squares={currentSquares}
+          onPlay={handlePlay}
+          currentMove={currentMove}
+        />
+      </div>
+      <div className="game-info">
+        <button onClick={() => setIsAscending(!isAscending)}>
+          Sort {isAscending ? 'Descending' : 'Ascending'}
+        </button>
+
+        <ol>{orderedMoves}</ol>
+
+      </div>
+      <button onClick={restartGame}>Restart Game</button>
+
+    </div>
+  );
+}

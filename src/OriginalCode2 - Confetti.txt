@@ -1,0 +1,121 @@
+// App.js
+import React, { useState } from 'react';
+import './App.css';
+import Confetti from 'react-confetti';
+import { useWindowSize } from '@react-hook/window-size';
+
+function Square({ value, onClick, isWinning }) {
+  return (
+    <button className={`square ${isWinning ? 'winning' : ''}`} onClick={onClick}>
+      {value}
+    </button>
+  );
+}
+
+function Board({ squares, onClick, winningLine }) {
+  return (
+    <div>
+      {[0, 1, 2].map((row) => (
+        <div key={row} className="board-row">
+          {[0, 1, 2].map((col) => {
+            const index = row * 3 + col;
+            const isWinning = winningLine.includes(index);
+            return (
+              <Square
+                key={index}
+                value={squares[index]}
+                onClick={() => onClick(index)}
+                isWinning={isWinning}
+              />
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+  for (const [a, b, c] of lines) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return { winner: squares[a], line: [a, b, c] };
+    }
+  }
+  return null;
+}
+
+export default function App() {
+  const [history, setHistory] = useState([{ squares: Array(9).fill(null), moveLocation: null }]);
+  const [stepNumber, setStepNumber] = useState(0);
+  const [ascending, setAscending] = useState(true);
+  const xIsNext = stepNumber % 2 === 0;
+  const current = history[stepNumber];
+  const [width, height] = useWindowSize();
+
+  const result = calculateWinner(current.squares);
+  const winner = result ? result.winner : null;
+  const winningLine = result ? result.line : [];
+
+  const handleClick = (i) => {
+    const hist = history.slice(0, stepNumber + 1);
+    const currentSquares = hist[hist.length - 1].squares.slice();
+    if (calculateWinner(currentSquares) || currentSquares[i]) return;
+
+    currentSquares[i] = xIsNext ? 'X' : 'O';
+    const row = Math.floor(i / 3) + 1;
+    const col = (i % 3) + 1;
+    setHistory(hist.concat([{ squares: currentSquares, moveLocation: { row, col } }]));
+    setStepNumber(hist.length);
+  };
+
+  const moves = history.map((step, move) => {
+    const desc = move ? `Go to move #${move} (${step.moveLocation?.row}, ${step.moveLocation?.col})` : 'Go to game start';
+    return (
+      <li key={move}>
+        {move === stepNumber ? <strong>You are at move #{move}</strong> : (
+          <button onClick={() => setStepNumber(move)}>{desc}</button>
+        )}
+      </li>
+    );
+  });
+
+  if (!ascending) moves.reverse();
+
+  const handleRestart = () => {
+    setHistory([{ squares: Array(9).fill(null), moveLocation: null }]);
+    setStepNumber(0);
+  };
+
+  const status = winner
+    ? `Winner: ${winner}`
+    : history[stepNumber].squares.every(Boolean)
+    ? "It's a draw!"
+    : `Next player: ${xIsNext ? 'X' : 'O'}`;
+
+  return (
+    <div className="game">
+      {winner && <Confetti width={width} height={height} />}
+      <div className="game-board">
+        <Board squares={current.squares} onClick={handleClick} winningLine={winningLine} />
+      </div>
+      <div className="game-info">
+        <div>{status}</div>
+        <button onClick={() => setAscending(!ascending)}>
+          Toggle Sort ({ascending ? 'Asc' : 'Desc'})
+        </button>
+        <button onClick={handleRestart}>Restart Game</button>
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
+}

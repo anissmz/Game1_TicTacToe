@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '@react-hook/window-size';
@@ -48,46 +48,6 @@ function calculateWinner(squares) {
   return null;
 }
 
-function getAvailableMoves(squares) {
-  return squares.map((val, idx) => val ? null : idx).filter(i => i !== null);
-}
-
-function minimax(squares, depth, isMaximizing) {
-  const result = calculateWinner(squares);
-  if (result?.winner === 'O') return { score: 10 - depth };
-  if (result?.winner === 'X') return { score: depth - 10 };
-  if (squares.every(Boolean)) return { score: 0 };
-
-  const moves = getAvailableMoves(squares);
-  let bestMove = null;
-
-  if (isMaximizing) {
-    let maxEval = -Infinity;
-    for (let move of moves) {
-      squares[move] = 'O';
-      const evalResult = minimax(squares, depth + 1, false);
-      squares[move] = null;
-      if (evalResult.score > maxEval) {
-        maxEval = evalResult.score;
-        bestMove = move;
-      }
-    }
-    return { score: maxEval, move: bestMove };
-  } else {
-    let minEval = Infinity;
-    for (let move of moves) {
-      squares[move] = 'X';
-      const evalResult = minimax(squares, depth + 1, true);
-      squares[move] = null;
-      if (evalResult.score < minEval) {
-        minEval = evalResult.score;
-        bestMove = move;
-      }
-    }
-    return { score: minEval, move: bestMove };
-  }
-}
-
 export default function App() {
   const [history, setHistory] = useState(() => {
     const saved = localStorage.getItem('ticTacToeHistory');
@@ -99,13 +59,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : 0;
   });
 
-  const [scores, setScores] = useState(() => {
-    const saved = localStorage.getItem('ticTacToeScores');
-    return saved ? JSON.parse(saved) : { X: 0, O: 0 };
-  });
-
   const [ascending, setAscending] = useState(true);
-  const [theme, setTheme] = useState('light');
   const xIsNext = stepNumber % 2 === 0;
   const current = history[stepNumber];
   const [width, height] = useWindowSize();
@@ -113,14 +67,14 @@ export default function App() {
   const result = calculateWinner(current.squares);
   const winner = result?.winner || null;
   const winningLine = result?.line || [];
+
   const isBoardFull = current.squares.every(Boolean);
   const isGameOver = winner || isBoardFull;
 
   useEffect(() => {
     localStorage.setItem('ticTacToeHistory', JSON.stringify(history));
     localStorage.setItem('ticTacToeStep', JSON.stringify(stepNumber));
-    localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
-  }, [history, stepNumber, scores]);
+  }, [history, stepNumber]);
 
   const handleClick = (i) => {
     const hist = history.slice(0, stepNumber + 1);
@@ -128,41 +82,32 @@ export default function App() {
     if (isGameOver || currentSquares[i]) return;
 
     currentSquares[i] = xIsNext ? 'X' : 'O';
+
     const row = Math.floor(i / 3) + 1;
     const col = (i % 3) + 1;
-
     const nextHistory = hist.concat([{ squares: currentSquares, moveLocation: { row, col } }]);
     setHistory(nextHistory);
     setStepNumber(nextHistory.length - 1);
+  };
 
-    const result = calculateWinner(currentSquares);
-    if (result?.winner) {
-      setScores((prev) => ({
-        ...prev,
-        [result.winner]: prev[result.winner] + 1,
-      }));
-    }
+  const makeRandomMove = () => {
+    const emptyIndices = current.squares.map((val, idx) => val ? null : idx).filter(i => i !== null);
+    if (emptyIndices.length === 0) return;
+    const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+    setTimeout(() => handleClick(randomIndex), 500);
   };
 
   useEffect(() => {
     if (!xIsNext && !isGameOver) {
-      const currentSquares = current.squares.slice();
-      const bestMove = minimax(currentSquares, 0, true).move;
-      if (bestMove != null) {
-        setTimeout(() => handleClick(bestMove), 400);
-      }
+      makeRandomMove();
     }
   }, [xIsNext, stepNumber]);
 
   const moves = history.map((step, move) => {
-    const desc = move
-      ? `Go to move #${move} (${step.moveLocation?.row}, ${step.moveLocation?.col})`
-      : 'Go to game start';
+    const desc = move ? `Go to move #${move} (${step.moveLocation?.row}, ${step.moveLocation?.col})` : 'Go to game start';
     return (
       <li key={move}>
-        {move === stepNumber ? (
-          <strong>You are at move #{move}</strong>
-        ) : (
+        {move === stepNumber ? <strong>You are at move #{move}</strong> : (
           <button onClick={() => setStepNumber(move)}>{desc}</button>
         )}
       </li>
@@ -175,11 +120,8 @@ export default function App() {
     const initial = [{ squares: Array(9).fill(null), moveLocation: null }];
     setHistory(initial);
     setStepNumber(0);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-    document.body.className = theme === 'light' ? 'dark' : 'light';
+    localStorage.removeItem('ticTacToeHistory');
+    localStorage.removeItem('ticTacToeStep');
   };
 
   const status = winner
@@ -189,23 +131,17 @@ export default function App() {
     : `Next player: ${xIsNext ? 'X (You)' : 'O (AI)'}`;
 
   return (
-    <div className={`game ${theme}`}>
+    <div className="game">
       {winner && <Confetti width={width} height={height} />}
-      <h1>Tic Tac Toe</h1>
-      <div className="scoreboard">
-        <div>X (You): {scores.X}</div>
-        <div>O (AI): {scores.O}</div>
-      </div>
       <div className="game-board">
         <Board squares={current.squares} onClick={handleClick} winningLine={winningLine} />
       </div>
       <div className="game-info">
         <div>{status}</div>
-        <div className="controls">
-          <button onClick={() => setAscending(!ascending)}>Toggle Sort ({ascending ? 'Asc' : 'Desc'})</button>
-          <button onClick={handleRestart}>Restart Game</button>
-          <button onClick={toggleTheme}>Toggle Theme</button>
-        </div>
+        <button onClick={() => setAscending(!ascending)}>
+          Toggle Sort ({ascending ? 'Asc' : 'Desc'})
+        </button>
+        <button onClick={handleRestart}>Restart Game</button>
         <ol>{moves}</ol>
       </div>
     </div>
