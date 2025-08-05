@@ -116,7 +116,7 @@ export default function App() {
   const isBoardFull = current.squares.every(Boolean);
   const isGameOver = winner || isBoardFull;
 
-  <div className="App">
+    <div>
       <h1>Welcome to My Site</h1>
       <p>This is my homepage.</p>
 
